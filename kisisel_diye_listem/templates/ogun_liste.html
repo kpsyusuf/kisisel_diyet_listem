@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Öğün Listesi</title>
+  <style>
+    
+    body {
+      position: relative;
+      font-family: "Poppins", sans-serif;
+      background: url(/static/images/diyet_listesi.jpg) no-repeat center center fixed;
+      background-size: cover;
+      padding: 30px;
+      color: #fff;
+      margin: 0;
+    }
+    
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: -1;
+    }
+
+    
+    .gun-karti {
+      background: rgba(0, 0, 0, 0.65); 
+      margin-bottom: 20px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(6px);
+      transition: transform 0.3s ease-in-out;
+    }
+    .gun-karti:hover {
+      transform: scale(1.02);
+    }
+    
+    .ogun {
+      background: rgba(50, 50, 50, 0.75);
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .besin-item {
+      margin-bottom: 8px;
+      padding: 10px;
+      border-left: 5px solid #5a9bd4;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+      color: #333;
+    }
+    .besin-item:hover {
+      background-color: #e0e0e0;
+    }
+    
+    button {
+      padding: 8px 12px;
+      background: linear-gradient(to right, #d9534f, #c9302c);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: linear-gradient(to right, #c9302c, #a52824);
+      transform: scale(1.05);
+    }
+    h1 {
+      text-align: center;
+      color: #ffffff;
+      font-size: 50px;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+      margin-bottom: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>OLUŞTURULAN LİSTELER</h1>
+  {% for tarih, ogunler in liste.items() %}
+    <div class="gun-karti">
+      <h3>
+        {{ tarih }}
+        <button onclick="gunuSil('{{ tarih }}')" aria-label="Bu günü sil">Günü Sil</button>
+      </h3>
+      <p><strong>Alınması gereken kalori:</strong> {{ cal_need }} kcal</p>
+      <p><strong>Alınan toplam kalori:</strong> {{ tarih_toplamlari[tarih] }} kcal</p>
+      {% for ogun_tipi, detaylar in ogunler.items() %}
+        <div class="ogun">
+          <h4>
+            {{ ogun_tipi }}
+            <button onclick="ogunuSil('{{ tarih }}', '{{ ogun_tipi }}')" aria-label="Bu öğünü sil">Öğünü Sil</button>
+          </h4>
+          <ul style="list-style: none; padding-left: 0;">
+            {% for besin in detaylar.besinler %}
+              <li class="besin-item">
+                <span><strong>{{ besin.isim }}</strong></span>
+                <span>Miktar: {{ besin.miktar }} {{ besin.olcum_turu }}</span>
+                <span>Toplam Kalori: {{ besin.kalori | round(2) }} kcal</span>
+              </li>
+            {% endfor %}
+          </ul>
+          <p><em>Bu öğünde alınan kalori:</em> {{ detaylar.toplam_kalori }} kcal</p>
+        </div>
+      {% endfor %}
+      <hr>
+    </div>
+  {% endfor %}
+  <script>
+    function gunuSil(tarih) {
+      if (confirm("Bu günü silmek istediğinizden emin misiniz?")) {
+        fetch("/gun_sil", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tarih: tarih })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          } else {
+            alert("Silme işlemi başarısız oldu.");
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Bir hata oluştu, lütfen tekrar deneyin.");
+        });
+      }
+    }
+    function ogunuSil(tarih, ogun_tipi) {
+      if (confirm("Bu öğünü silmek istediğinizden emin misiniz?")) {
+        fetch("/ogun_sil", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tarih: tarih, ogun_tipi: ogun_tipi })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          } else {
+            alert("Silme işlemi başarısız oldu.");
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Bir hata oluştu, lütfen tekrar deneyin.");
+        });
+      }
+    }
+  </script>
+</body>
+</html>

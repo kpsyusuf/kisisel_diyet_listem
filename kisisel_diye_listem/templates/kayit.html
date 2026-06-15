@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kayıt Ol</title>
+    <style>
+
+
+body {
+    background-image: url(/static/images/diyet_besinler.jpg); 
+    background-size: cover; 
+    background-position: center; 
+    background-attachment: fixed; 
+    font-family: 'Segoe UI', sans-serif;
+    padding: 30px;
+    color: #333;
+}
+
+
+form {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #3498db;
+    margin-bottom: 25px;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+
+label {
+    display: block;
+    margin-top: 18px;
+    font-weight: 600;
+    color: #555;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border 0.3s ease;
+}
+
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+select:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+
+button {
+    margin-top: 20px;
+    padding: 15px;
+    width: 100%;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    font-size: 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+
+#alerji_alani {
+    margin-top: 15px;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    display: none;
+}
+
+#arama_sonuclari {
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: #f0f0f0;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+
+#arama_sonuclari label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+#arama_sonuclari input {
+    margin-right: 8px;
+    transform: scale(1.2); 
+}
+
+
+.flash {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.flash.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.flash.danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+    </style>
+</head>
+<body>
+    <form action="/kayit" method="POST">
+        <h2>Kayıt Ol</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% set first = messages[0] %}
+            <div class="flash {{ first[0] }}">{{ first[1] }}</div>
+          {% endif %}
+        {% endwith %}
+
+        <label for="ad">Ad</label>
+        <input type="text" name="ad" required>
+
+        <label for="soyad">Soyad</label>
+        <input type="text" name="soyad" required>
+
+        <label for="yas">Yaş</label>
+        <input type="number" name="yas" required>
+
+        <label for="cinsiyet">Cinsiyet</label>
+        <select name="cinsiyet" required>
+            <option value="">Seçiniz</option>
+            <option value="Erkek">Erkek</option>
+            <option value="Kadın">Kadın</option>
+        </select>
+
+        <label for="boy">Boy (cm)</label>
+        <input type="number" name="boy" required>
+
+        <label for="kilo">Kilo (kg)</label>
+        <input type="number" name="kilo" required>
+
+        <label for="diyabet">Diyabet</label>
+        <select name="diyabet" required>
+            <option value="">Seçiniz</option>
+            <option value="1">Evet</option>
+            <option value="0">Hayır</option>
+        </select>
+
+        <label for="email">Email</label>
+        <input type="email" name="email" required>
+
+        <label for="sifre">Şifre</label>
+        <input type="password" name="sifre" required>
+
+        <label>Alerji Durumu:</label><br>
+        <label><input type="radio" name="alerji_durumu" value="var"> Var</label>
+        <label><input type="radio" name="alerji_durumu" value="yok" checked> Yok</label>
+
+        <div id="alerji_alani" style="display: none; margin-top: 10px;">
+            <input type="text" id="gida_ara" placeholder="Gıda ara..." autocomplete="off">
+            <div id="arama_sonuclari"></div>
+        </div>
+
+        <button type="submit">Kayıt Ol</button>
+    </form>
+
+    <script>
+        const radioBtns = document.getElementsByName("alerji_durumu");
+        const alerjiAlani = document.getElementById("alerji_alani");
+        const aramaInput = document.getElementById("gida_ara");
+        const aramaSonuclari = document.getElementById("arama_sonuclari");
+
+        
+        window.addEventListener("DOMContentLoaded", () => {
+            const secili = [...radioBtns].find(rb => rb.checked);
+            if (secili && secili.value === "var") {
+                alerjiAlani.style.display = "block";
+            }
+        });
+
+        
+        radioBtns.forEach(rb => {
+            rb.addEventListener("change", () => {
+                alerjiAlani.style.display = rb.value === "var" ? "block" : "none";
+            });
+        });
+
+        
+        aramaInput.addEventListener("input", function () {
+            const kelime = this.value.trim();
+            aramaSonuclari.innerHTML = "";
+
+            if (kelime.length < 2) {
+                aramaSonuclari.innerHTML = "<em>Lütfen en az 2 karakter girin.</em>";
+                return;
+            }
+
+            fetch(`/gida-arama?kelime=${encodeURIComponent(kelime)}`)
+                .then(res => res.json())
+                .then(data => {
+                    aramaSonuclari.innerHTML = "";
+                    if (data.length === 0) {
+                        aramaSonuclari.innerHTML = "<em>Sonuç bulunamadı.</em>";
+                        return;
+                    }
+
+                    data.forEach(gida => {
+                        const label = document.createElement("label");
+                        label.style.display = "block";
+
+                        const checkbox = document.createElement("input");
+                        checkbox.type = "checkbox";
+                        checkbox.name = "alerjiler[]";  
+                        checkbox.value = gida.id;
+
+                        label.appendChild(checkbox);
+                        label.append(" " + gida.isim);
+                        aramaSonuclari.appendChild(label);
+                    });
+                })
+                .catch(() => {
+                    aramaSonuclari.innerHTML = "<em>Arama sırasında hata oluştu.</em>";
+                });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Besin Seçimi</title>
+  <style>
+    
+    body {
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url('/static/images/masa.jpg') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: relative;
+    }
+    
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 0;
+    }
+    
+    .container {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      max-width: 1100px;
+      margin: 30px auto;
+      flex: 1;
+      width: 90%;
+      position: relative;
+      z-index: 1;
+      
+      
+      transform: scale(0.85);
+      transform-origin: top center;
+    }
+    .kalori-box {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+    .form-control {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #444;
+    }
+    input, select {
+      padding: 12px;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      background: #f9f9f9;
+      transition: all 0.3s ease;
+    }
+    input:focus, select:focus {
+      border-color: #4CAF50;
+      background: white;
+      outline: none;
+    }
+    
+    .table-container {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+      font-size: 16px;
+    }
+    th {
+      background-color: #555;
+      color: white;
+    }
+    tr:hover {
+      background-color: #f0f0f0;
+    }
+    
+    button, a {
+      padding: 14px 30px;
+      font-size: 18px;
+      background: #555;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+    }
+    button:hover, a:hover {
+      background: #303F9F;
+      transform: scale(1.05);
+    }
+    
+    .action-buttons {
+      margin-top: 30px;
+      text-align: center;
+    }
+    .action-buttons button,
+    .action-buttons a {
+      margin: 0 10px;
+      width: 180px;
+      text-align: center;
+      text-decoration: none;
+      padding: 14px 30px;
+      border-radius: 10px;
+      transition: background-color 0.3s, transform 0.3s;
+      display: inline-block;
+      color: #fff;
+      background: #555;
+    }
+    .action-buttons a:hover, button:hover {
+      background: #303F9F;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="kalori-box">
+      <div>Almanız gereken kalori: <span id="hedefKalori">{{ hedef_kalori }}</span> kcal</div>
+      <div>Toplam seçilen kalori: <span id="toplamKalori">0</span> kcal</div>
+    </div>
+    <form id="besinSecForm" action="/secili_besinleri_kaydet" method="POST" onsubmit="return validateForm();">
+      <div class="form-control">
+        <label for="tarih">Tarih:</label>
+        <input type="date" name="tarih" id="tarih" required>
+      </div>
+      <div class="form-control">
+        <label for="ogun_tipi">Öğün Tipi:</label>
+        <select name="ogun_tipi" id="ogun_tipi" required>
+          <option value="">Seçiniz</option>
+          <option value="Sabah">Sabah</option>
+          <option value="Ara Öğün 1">Ara Öğün 1</option>
+          <option value="Öğle">Öğle</option>
+          <option value="Ara Öğün 2">Ara Öğün 2</option>
+          <option value="Akşam">Akşam</option>
+          <option value="ara ogun 3">ara ogun 3</option>
+        </select>
+      </div>
+      <label for="aramaKutusu"><strong>Besin Ara:</strong></label>
+      <input type="text" id="aramaKutusu" onkeyup="filtreleBesinler()" placeholder="Besin ismi giriniz...">
+      
+      <div class="table-container">
+        <table id="besinTablosu">
+          <thead>
+            <tr>
+              <th>Seç</th>
+              <th>Besin Adı</th>
+              <th>Ölçüm Türü</th>
+              <th>Miktar</th>
+              <th>Kalori</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in besinler %}
+            <tr>
+              <td>
+                <input type="checkbox" name="secilen_besinler[]" value="{{ b.id }}" data-kalori="{{ b.kalori }}" onchange="kaloriHesapla()">
+              </td>
+              <td>{{ b.isim }}</td>
+              <td>{{ b.olcum_turu }}</td>
+              <td>
+                <input type="number" name="miktar_{{ b.id }}" value="1" min="0.1" step="0.1" onchange="kaloriHesapla()">
+              </td>
+              <td>{{ b.kalori }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </form>
+    
+    <div class="action-buttons">
+      <button type="submit" form="besinSecForm">Seçilenleri Kaydet</button>
+      <a href="/profil">Profile Git</a>
+      <a href="/ogun_liste">Listeye Git</a>
+    </div>
+  </div>
+  <script>
+    function filtreleBesinler() {
+      var input = document.getElementById("aramaKutusu");
+      var filtre = input.value.toUpperCase();
+      var tablo = document.getElementById("besinTablosu");
+      var satirlar = tablo.getElementsByTagName("tr");
+      for (var i = 1; i < satirlar.length; i++) {
+        var hucre = satirlar[i].getElementsByTagName("td")[1];
+        if (hucre) {
+          var txtDeger = hucre.textContent || hucre.innerText;
+          satirlar[i].style.display = txtDeger.toUpperCase().indexOf(filtre) > -1 ? "" : "none";
+        }
+      }
+    }
+    function kaloriHesapla() {
+      let toplam = 0;
+      const secimler = document.querySelectorAll("input[type=checkbox]:checked");
+      secimler.forEach(function(item) {
+        const kalori = parseFloat(item.getAttribute("data-kalori")) || 0;
+        const id = item.value;
+        const miktarInput = document.querySelector(`input[name="miktar_${id}"]`);
+        const miktar = parseFloat(miktarInput?.value) || 1;
+        toplam += kalori * miktar;
+      });
+      document.getElementById("toplamKalori").innerText = toplam.toFixed(2);
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+      var bugun = new Date().toISOString().split("T")[0];
+      document.getElementById("tarih").setAttribute("min", bugun);
+    });
+    function validateForm() {
+      const ogun = document.getElementById("ogun_tipi").value;
+      if (!ogun) {
+        alert("Lütfen bir öğün tipi seçiniz.");
+        return false;
+      }
+      return true;
+    }
+  </script>
+</body>
+</html>
